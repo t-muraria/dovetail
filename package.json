@@ -1,0 +1,26 @@
+{
+  "name": "dovetail",
+  "version": "1.0.0",
+  "description": "an indulgent ideas board app",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nw src/",
+    "build": "nwbuild --platforms win32,win64,osx,linux32,linux64 --buildDir dist/ dovetail"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/t-muraria/dovetail.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "GNU GPL 3",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/t-muraria/dovetail/issues"
+  },
+  "homepage": "https://github.com/t-muraria/dovetail#readme",
+  "devDependencies": {
+    "nw": "^0.100.0",
+    "nw-builder": "^4.13.14"
+  }
+}
