@@ -1,0 +1,78 @@
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: peachpuff;
+}
+
+.radialMenu {
+    background-color: antiquewhite;
+    position: absolute;
+    top: 2px;
+    left: 90px;
+
+    input {
+        display: none;
+        /*change these and below to mouse pos*/
+
+        &:checked ~ button {
+            opacity: 100%;
+            &:nth-of-type(1) {
+                transition-duration: 0.38s;
+                transform: translate3d(0px, -105px, 0);
+            }
+            &:nth-of-type(2) {
+                transition-duration: 0.38s;
+                transform: translate3d(99.86093418px, -32.446784369999996px, 0);
+            }
+            &:nth-of-type(3) {
+                transition-duration: 0.38s;
+                transform: translate3d(61.71745146px, 84.94678437px, 0);
+            }
+            &:nth-of-type(4) {
+                transition-duration: 0.38s;
+                transform: translate3d(-61.71745146px, 84.94678437px, 0);
+            }
+            &:nth-of-type(5) {
+                transition-duration: 0.38s;
+                transform: translate3d(
+                    -99.86093418px,
+                    -32.446784369999996px,
+                    0
+                );
+            }
+        }
+    }
+
+    button {
+        /* later, exchange styling for vector graphics */
+        border-radius: 100%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+        height: 80px;
+        width: 80px;
+        position: absolute;
+        transition-duration: 0.18s;
+        opacity: 0%;
+    }
+}
+
+.note {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: antiquewhite;
+    /* width: 300px;
+    height: 300px; */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+.text {
+    width: 200px;
+    height: auto;
+    min-height: 2em;
+    color: black;
+    font-size: 12pt;
+
+    margin: 2px;
+    padding: 2px;
+}
