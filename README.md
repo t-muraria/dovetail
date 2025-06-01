@@ -9,8 +9,8 @@ there's a lot of text-focused apps out there, and a decent amount of boards, but
 
 ROADMAP (approximately):
 - [->] basic functions
-  - [80%] create menu
-  - [70%] text notes
+  - [95%] create menu
+  - [90%] text notes
   - [] audio notes
   - [] video/animation notes
     - [?] web embed notes

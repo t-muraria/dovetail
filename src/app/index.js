@@ -1,3 +1,5 @@
+// Window.showDevTools();
+
 //constructing the radial menu for base interactions
 var radialMenu = document.createElement("div");
 radialMenu.classList.add("radialMenu");
@@ -33,41 +35,68 @@ buttons.forEach(function (button) {
     testbutton.checked = false;
     // document.removeChild(radialMenu); //doesn't work
     // keeping this option here in case we want to fly away the vanish based on where it was clicked
+    document.removeChild(radialMenu);
     buttons.forEach(function (button) {
       button.setAttribute("disabled", "disabled");
       // enable this again or set timeout on button
-      button.style.top = (-45).toString() + "px";
-      button.style.left = (-45).toString() + "px";
+      // button.style.top = (-45).toString() + "px";
+      // button.style.left = (-45).toString() + "px";
     });
   });
 
   radialMenu.appendChild(button);
 });
 
-// function for dragging
+//zindex reference
+var zincrement = 0;
+
+// function for dragging full notes
 function setDraggable(elem) {
   var pos1 = 0,
     pos2 = 0,
     pos3 = 0,
     pos4 = 0;
-  document.onmousedown = dragMouseDown();
+
+  elem.onmousedown = dragMouseDown;
 
   function dragMouseDown(ev) {
-    ev.preventDefault();
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = stopDragging;
-    // call a function whenever the cursor moves:
-    document.onmousemove = dragItem;
+    if (elem == ev.target && ev.buttons == 1) {
+      ev.preventDefault();
+      pos3 = ev.clientX;
+      pos4 = ev.clientY;
+      document.onmouseup = stopDragging;
+      // call a function whenever the cursor moves:
+      document.onmousemove = dragItem;
+      // document.appendChild(elem);
+      // if (document.lastChild != elem) {
+      // } else {
+
+      // }
+    }
   }
 
+  // var stacked = false;
   function dragItem(ev) {
     ev.preventDefault();
+    // elem.focus();
+    //reordering - this bit puts to negative which unfort disables the elements? sad.
+    // if (!stacked) {
+    //   document.querySelectorAll(".note").forEach(function (extantNote) {
+    //     if (extantNote != elem) {
+    //       extantNote.style.zIndex = (extantNote.style.zIndex - 1).toString();
+    //     }
+    //   });
+    //   stacked = true;
+    // }
+    if (zincrement < document.querySelectorAll(".note").length) {
+      zincrement = document.querySelectorAll(".note").length;
+    }
+    elem.style.zIndex = (zincrement + 1).toString();
     // calculate the new cursor position:
-    pos1 = pos3 - e.clientX;
-    pos2 = pos4 - e.clientY;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
+    pos1 = pos3 - ev.clientX;
+    pos2 = pos4 - ev.clientY;
+    pos3 = ev.clientX;
+    pos4 = ev.clientY;
     // set the element's new position:
     elem.style.top = elem.offsetTop - pos2 + "px";
     elem.style.left = elem.offsetLeft - pos1 + "px";
@@ -76,7 +105,15 @@ function setDraggable(elem) {
   function stopDragging() {
     document.onmouseup = null;
     document.onmousemove = null;
+    zincrement++;
   }
+}
+
+// function for reordering paragraph elements that are set to draggable
+function setReorderable(elem) {
+  //stealing most of the stuff from the one above,
+  // checking for relative position to siblings?
+  // reorder live
 }
 
 // screen movement with unhandled arrow key input, wasd?
@@ -103,18 +140,39 @@ function lineBreak(ev, note) {
       note.appendChild(newP);
       newP.focus();
     }
-  } else if (ev.key == "ArrowUp") {
+  } else if (ev.key == "ArrowUp" && ev.target.previousSibling != null) {
     // code for moving up a line
+    ev.target.previousSibling.focus();
     // additional code for moving the line up?
-  } else if (ev.key == "ArrowDown") {
+    if (ev.altKey) {
+      //conditional works
+      var cur = ev.target,
+        above = ev.target.previousSibling;
+      cur.parentElement.replaceChild(cur, above);
+      cur.parentElement.insertBefore(above, cur.nextSibling);
+      cur.focus();
+    }
+  } else if (ev.key == "ArrowDown" && ev.target.nextSibling != null) {
     // repeat for down
+    ev.target.nextSibling.focus();
+    // and then again
+    if (ev.altKey) {
+      //conditional works
+      var cur = ev.target,
+        below = ev.target.nextSibling;
+      cur.parentElement.replaceChild(cur, below);
+      cur.parentElement.insertBefore(below, cur);
+      cur.focus();
+    }
   }
   // delete case, move to next
   else if (
-    ev.key == "Backspace" &&
+    ev.key == "Delete" &&
     ev.target.textContent == "" &&
-    ev.target.parentElement.childElementCount > 1
+    ev.target.nextSibling != null
   ) {
+    ev.preventDefault();
+    ev.target.nextSibling.focus();
     note.removeChild(ev.target);
     // then set focus to next
   }
@@ -122,10 +180,12 @@ function lineBreak(ev, note) {
   else if (
     ev.key == "Backspace" &&
     ev.target.textContent == "" &&
-    ev.target.parentElement.childElementCount > 1
+    ev.target.previousSibling != null
   ) {
+    // then set focus to prev
+    ev.preventDefault();
+    ev.target.previousSibling.focus();
     note.removeChild(ev.target);
-    // then set focus to preventDefault
   }
 }
 
@@ -161,10 +221,12 @@ document.body.addEventListener("mousedown", function (ev) {
   // can return later to set var for mod
   // currently this does not apply once we go over the edge of the bounding box. how to fix that if notes steal it down?
   if (ev.shiftKey && !testbutton.checked && ev.buttons == 1) {
+    document.body.appendChild(radialMenu);
+    radialMenu.style.zIndex = (zincrement + 1).toString();
     buttons.forEach(function (button) {
       setTimeout(function () {
         button.removeAttribute("disabled");
-      }, 200);
+      }, 100);
       if (button == closeMake) {
         button.style.top = (ev.clientY - 25).toString() + "px";
         button.style.left = (ev.clientX - 25).toString() + "px";
@@ -173,7 +235,9 @@ document.body.addEventListener("mousedown", function (ev) {
         button.style.left = (ev.clientX - 45).toString() + "px";
       }
     });
-    testbutton.checked = true;
+    setTimeout(function () {
+      testbutton.checked = true;
+    }, 50);
   }
   //elif case for closing and reopening / sliding it over
   else if (ev.shiftKey && ev.buttons == 1) {

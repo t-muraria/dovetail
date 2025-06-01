@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/t-muraria/dovetail#readme",
   "devDependencies": {
-    "nw": "^0.100.0",
+    "nw": "^0.100.0-sdk",
     "nw-builder": "^4.13.14"
   }
 }

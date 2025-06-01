@@ -51,7 +51,19 @@ body {
         position: absolute;
         transition-duration: 0.18s;
         opacity: 0%;
+
+        -webkit-user-select: none; /* Safari */
+        -ms-user-select: none; /* IE 10 and IE 11 */
+        user-select: none; /* Standard syntax */
     }
+}
+
+.pinned {
+    /* placeholder class for notes that need to stay on top */
+}
+
+.floored {
+    /* placeholder for ones that stay on bottom */
 }
 
 .note {
@@ -63,6 +75,8 @@ body {
     height: 300px; */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
     min-height: 10em;
+
+    z-index: 0;
 }
 
 .text {
