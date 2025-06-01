@@ -91,7 +91,12 @@ function setDraggable(elem) {
     if (zincrement < document.querySelectorAll(".note").length) {
       zincrement = document.querySelectorAll(".note").length;
     }
-    elem.style.zIndex = (zincrement + 1).toString();
+    document.querySelectorAll(".pinned").forEach(function (extantPinned) {
+      extantPinned.style.zIndex = (zincrement + 2).toString();
+    });
+    if (!elem.classList.contains("floored")) {
+      elem.style.zIndex = (zincrement + 1).toString();
+    }
     // calculate the new cursor position:
     pos1 = pos3 - ev.clientX;
     pos2 = pos4 - ev.clientY;
@@ -189,6 +194,39 @@ function lineBreak(ev, note) {
   }
 }
 
+//menu elements for reuse ; can't rly externalize without extra jank about referencing the nodes they're targeting so
+// var menuPinTop = new nw.MenuItem({
+//   label: "pin to top",
+//   click: function (ev) {
+//     ev.target.classList.add("pinned");
+//     ev.target.classList.remove("floored");
+//     ev.target.style.zIndex = (zincrement + 2).toString();
+//     menuPinBot.label = "unpin from top";
+//     menuPinTop.click = function () {
+//       note.classList.remove("pinned");
+//     };
+//   },
+// });
+// var menuPinBot = new nw.MenuItem({
+//   label: "pin to bottom",
+//   click: function (ev) {
+//     ev.target.classList.add("floored");
+//     ev.target.classList.remove("pinned");
+//     ev.target.style.zIndex = (zincrement * 0).toString();
+//   },
+// });
+//submenu for the color options
+// var menuSubmenuColors = new nw.Menu();
+// colors
+// var color1icon = Image(50, 50);
+// color1icon.src = "../assets/puff.jpg";
+// var color2icon = Image(50, 50);
+// color2icon.src = "../assets/red.jpg";
+// var color3icon = Image(50, 50);
+// color3icon.src = "../assets/green.jpg";
+// var color4icon = Image(50, 50);
+// color4icon.src = "../assets/blue.jpg";
+
 //independent operations, making elements
 //text note, editable paragraphs inside div
 //  start with 1 div 1 p, ret makes new blank, ret in blank clears and exits focus
@@ -196,10 +234,89 @@ makeNote.addEventListener("click", function (ev) {
   //make div, child p
   var note = document.createElement("div");
   note.classList.add("note"); //base class for notes specifically, not the other graphics
+  // add the context menu for each text note. pin up, down, change colors, delete note
+  var menu = new nw.Menu();
+  var menuPinTop = new nw.MenuItem({
+    label: "pin to top",
+    click: function () {
+      note.classList.add("pinned");
+      note.classList.remove("floored");
+      note.style.zIndex = (zincrement + 2).toString();
+      menuPinTop.label = "unpin from top";
+      menuPinTop.click = function () {
+        note.classList.remove("pinned");
+      };
+    },
+  });
+  var menuPinBot = new nw.MenuItem({
+    label: "pin to bottom",
+    click: function () {
+      note.classList.add("floored");
+      note.classList.remove("pinned");
+      note.style.zIndex = (zincrement * 0).toString();
+      menuPinBot.label = "unpin from bot";
+      menuPinBot.click = function () {
+        note.classList.remove("floored");
+      };
+    },
+  });
+  var menuSubmenuColors = new nw.Menu();
+  var menuSubmenuColorsHolder = nw.MenuItem({
+    label: "set color:",
+    submenu: menuSubmenuColors,
+  });
+  var submenuColor1 = new nw.MenuItem({
+    label: "pale",
+    icon: "../assets/puff.jpg",
+    click: function () {
+      note.style.backgroundColor = "antiquewhite";
+    },
+  });
+  var submenuColor2 = new nw.MenuItem({
+    label: "blue",
+    icon: "../assets/blue.jpg",
+    click: function () {
+      note.style.backgroundColor = "#3998b4";
+    },
+  });
+  var submenuColor3 = new nw.MenuItem({
+    label: "red",
+    icon: "../assets/red.jpg",
+    click: function () {
+      note.style.backgroundColor = "#bc536d";
+    },
+  });
+  var submenuColor4 = new nw.MenuItem({
+    label: "green",
+    icon: "../assets/green.jpg",
+    click: function () {
+      note.style.backgroundColor = "#2da37a";
+    },
+  });
+  menuSubmenuColors.append(submenuColor1);
+  menuSubmenuColors.append(submenuColor2);
+  menuSubmenuColors.append(submenuColor3);
+  menuSubmenuColors.append(submenuColor4);
+  var menuDeleteNote = new nw.MenuItem({
+    label: "delete note",
+    click: function () {
+      if (confirm("delete? real?")) {
+        document.body.removeChild(note);
+      }
+    },
+  });
+  menu.append(menuPinTop);
+  menu.append(menuPinBot);
+  menu.append(menuSubmenuColorsHolder);
+  menu.append(menuDeleteNote);
+  note.addEventListener("contextmenu", function (ev) {
+    ev.preventDefault();
+    menu.popup(ev.x, ev.y);
+  });
   var noteText = document.createElement("p");
   noteText.classList.add("text");
   noteText.contentEditable = true;
-  // noteText.addEventListener("keydown", noteText, noteP);
+  // add the linebreak to the starting paragraph, recur inside
   noteText.addEventListener("keydown", function (ev) {
     lineBreak(ev, note);
   });
@@ -217,6 +334,7 @@ makeNote.addEventListener("click", function (ev) {
 
 document.body.appendChild(radialMenu);
 
+//handles setting radial menu position. generally good
 document.body.addEventListener("mousedown", function (ev) {
   // can return later to set var for mod
   // currently this does not apply once we go over the edge of the bounding box. how to fix that if notes steal it down?
