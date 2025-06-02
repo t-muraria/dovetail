@@ -14,8 +14,8 @@ var makeNote = document.createElement("button");
 makeNote.textContent = "text";
 var makeAudio = document.createElement("button");
 makeAudio.textContent = "audio";
-var makeVideo = document.createElement("button");
-makeVideo.textContent = "video";
+var makeVisual = document.createElement("button");
+makeVisual.textContent = "visual";
 var makeDraw = document.createElement("button");
 makeDraw.textContent = "pen";
 var makePin = document.createElement("button");
@@ -28,7 +28,7 @@ closeMake.style.width = "40px";
 //   testbutton.checked = false;
 // });
 // group operations here, make any option close the radial
-var buttons = [makeNote, makeAudio, makeVideo, makeDraw, makePin, closeMake];
+var buttons = [makeNote, makeAudio, makeVisual, makeDraw, makePin, closeMake];
 buttons.forEach(function (button) {
   button.setAttribute("disabled", "disabled");
   button.addEventListener("click", function () {
@@ -67,27 +67,11 @@ function setDraggable(elem) {
       document.onmouseup = stopDragging;
       // call a function whenever the cursor moves:
       document.onmousemove = dragItem;
-      // document.appendChild(elem);
-      // if (document.lastChild != elem) {
-      // } else {
-
-      // }
     }
   }
 
-  // var stacked = false;
   function dragItem(ev) {
     ev.preventDefault();
-    // elem.focus();
-    //reordering - this bit puts to negative which unfort disables the elements? sad.
-    // if (!stacked) {
-    //   document.querySelectorAll(".note").forEach(function (extantNote) {
-    //     if (extantNote != elem) {
-    //       extantNote.style.zIndex = (extantNote.style.zIndex - 1).toString();
-    //     }
-    //   });
-    //   stacked = true;
-    // }
     if (zincrement < document.querySelectorAll(".note").length) {
       zincrement = document.querySelectorAll(".note").length;
     }
@@ -111,6 +95,50 @@ function setDraggable(elem) {
     document.onmouseup = null;
     document.onmousemove = null;
     zincrement++;
+  }
+}
+
+//function for resizing notes
+function setResizeable(elem) {
+  //note is freeform, cassette and visuals are fixed ratio
+  //grab bloc and resize parent to it, steal from setDraggable
+  var pos1 = 0,
+    pos2 = 0,
+    pos3 = 0,
+    pos4 = 0;
+
+  elem.onmousedown = dragMouseDown;
+
+  function dragMouseDown(ev) {
+    if (elem == ev.target && ev.buttons == 1) {
+      ev.preventDefault();
+      pos3 = ev.clientX;
+      pos4 = ev.clientY;
+      document.onmouseup = stopDragging;
+      // call a function whenever the cursor moves:
+      document.onmousemove = dragItem;
+    }
+  }
+  function dragItem(ev) {
+    ev.preventDefault();
+    // calculate the new cursor position:
+    pos1 = pos3 - ev.clientX;
+    pos2 = pos4 - ev.clientY;
+    pos3 = ev.clientX;
+    pos4 = ev.clientY;
+    // set the element's parent div to the right dimensions:
+    // this part SUCKS i DONT understand why we can't just pull the parent height but APPARENTLY THAT DOESNT EXIST??
+    elem.parentElement.style.height =
+      (elem.parentElement.getBoundingClientRect()["height"] - pos2).toString() +
+      "px";
+    elem.parentElement.style.width =
+      (elem.parentElement.getBoundingClientRect()["width"] - pos1).toString() +
+      "px";
+  }
+
+  function stopDragging() {
+    document.onmouseup = null;
+    document.onmousemove = null;
   }
 }
 
@@ -185,7 +213,8 @@ function lineBreak(ev, note) {
   else if (
     ev.key == "Backspace" &&
     ev.target.textContent == "" &&
-    ev.target.previousSibling != null
+    ev.target.previousSibling != null &&
+    ev.target.parentElement.childElementCount > 2
   ) {
     // then set focus to prev
     ev.preventDefault();
@@ -322,7 +351,12 @@ makeNote.addEventListener("click", function (ev) {
   });
   //eventually we need to do voices, that prob goes here
 
+  //resize grabbable
+  noteHandle = document.createElement("div");
+  noteHandle.classList.add("noteHandle");
+  setResizeable(noteHandle);
   //place on board
+  note.appendChild(noteHandle);
   note.appendChild(noteText);
   document.body.appendChild(note);
   noteText.focus();
