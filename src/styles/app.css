@@ -88,7 +88,7 @@ body {
     color: black;
     font-size: 12pt;
 
-    margin: 5px;
+    margin: 10px;
     padding: 2px;
 
     &:focus-visible {
@@ -109,4 +109,46 @@ body {
     right: 5px;
     background-color: orange;
     border-radius: 5px 0 0 0;
+}
+
+.polaroid {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: antiquewhite;
+    width: 200px;
+    height: 10em;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    min-height: 10em;
+    min-width: 200px;
+
+    z-index: 0;
+}
+
+.cassette {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: antiquewhite;
+    width: 200px;
+    height: 10em;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    min-height: 10em;
+    min-width: 200px;
+
+    z-index: 0;
+}
+
+.CD {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: antiquewhite;
+    width: 200px;
+    height: 10em;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    min-height: 10em;
+    min-width: 200px;
+
+    z-index: 0;
 }

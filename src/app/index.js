@@ -296,28 +296,28 @@ makeNote.addEventListener("click", function (ev) {
   });
   var submenuColor1 = new nw.MenuItem({
     label: "pale",
-    icon: "../assets/puff.jpg",
+    // icon: "../assets/puff.jpg",
     click: function () {
       note.style.backgroundColor = "antiquewhite";
     },
   });
   var submenuColor2 = new nw.MenuItem({
     label: "blue",
-    icon: "../assets/blue.jpg",
+    // icon: "../assets/blue.jpg",
     click: function () {
       note.style.backgroundColor = "#3998b4";
     },
   });
   var submenuColor3 = new nw.MenuItem({
     label: "red",
-    icon: "../assets/red.jpg",
+    // icon: "../assets/red.jpg",
     click: function () {
       note.style.backgroundColor = "#bc536d";
     },
   });
   var submenuColor4 = new nw.MenuItem({
     label: "green",
-    icon: "../assets/green.jpg",
+    // icon: "../assets/green.jpg",
     click: function () {
       note.style.backgroundColor = "#2da37a";
     },
@@ -326,6 +326,20 @@ makeNote.addEventListener("click", function (ev) {
   menuSubmenuColors.append(submenuColor2);
   menuSubmenuColors.append(submenuColor3);
   menuSubmenuColors.append(submenuColor4);
+  // var menuCopyText = new nw.MenuItem({
+  //   label: "copy text",
+  //   click: function(){
+  //     note.querySelectorAll("p").forEach(function(textblock){
+  //       // need a package for this, clipboardy?
+  //     })
+  //   }
+  // })
+  // var menuCloneNote = new nw.MenuItem({ // this doesn't work out right bc it breaks movement
+  //   label: "clone note",
+  //   click: function () {
+  //     document.body.appendChild(note.cloneNode(true));
+  //   },
+  // });
   var menuDeleteNote = new nw.MenuItem({
     label: "delete note",
     click: function () {
@@ -337,6 +351,8 @@ makeNote.addEventListener("click", function (ev) {
   menu.append(menuPinTop);
   menu.append(menuPinBot);
   menu.append(menuSubmenuColorsHolder);
+  // menu.append(menuCopyText)
+  // menu.append(menuCloneNote);
   menu.append(menuDeleteNote);
   note.addEventListener("contextmenu", function (ev) {
     ev.preventDefault();
@@ -351,6 +367,147 @@ makeNote.addEventListener("click", function (ev) {
   });
   //eventually we need to do voices, that prob goes here
 
+  //resize grabbable
+  noteHandle = document.createElement("div");
+  noteHandle.classList.add("noteHandle");
+  setResizeable(noteHandle);
+  //place on board
+  note.appendChild(noteHandle);
+  note.appendChild(noteText);
+  document.body.appendChild(note);
+  noteText.focus();
+  note.style.top = (ev.clientY + 85).toString() + "px";
+  note.style.left = (ev.clientX - 20).toString() + "px";
+  //attach drag script? or can we handle that glob
+  setDraggable(note);
+});
+
+const reader = new FileReader();
+
+makeAudio.addEventListener("click", async function (ev) {
+  var pickerOpts = {
+    types: [
+      {
+        description: "AudioVisual formats",
+        accept: {
+          "audio/*": [".mp3", ".wav", ".ogg"],
+          "video/*": [".mp4", ".webm", ".ogg"],
+        },
+      },
+    ],
+    excludeAcceptAllOption: true,
+    multiple: false,
+  };
+  var [fileHandle] = await window.showOpenFilePicker(pickerOpts);
+  var fileData = await fileHandle.getFile();
+  if (!fileData) {
+    return;
+  } else {
+    if (fileData.type.startsWith("audio")) {
+      //this doesn't work fsr
+      console.log(fileData);
+      // var sound = reader.readAsDataURL(file); //i THINK this works?
+      var audioBlock = document.createElement("audio");
+      audioBlock.controls = true;
+      var source = document.createElement("source");
+      source.src = URL.createObjectURL(fileData); //from how i understand this we need to load the dataurl and pass it as the audio source for the element but idk if that is this.
+      // make div inside conditional bc classlist
+      var note = document.createElement("div");
+      note.classList.add("cassette");
+
+      audioBlock.appendChild(source);
+      note.appendChild(audioBlock);
+      // console.log("success " + fileData.toString());
+    }
+  }
+  // pin top, pin bottom, delete, change color, etc. need to edit the color settings
+  var menu = new nw.Menu();
+  var menuPinTop = new nw.MenuItem({
+    label: "pin to top",
+    click: function () {
+      note.classList.add("pinned");
+      note.classList.remove("floored");
+      note.style.zIndex = (zincrement + 2).toString();
+      menuPinTop.label = "unpin from top";
+      menuPinTop.click = function () {
+        note.classList.remove("pinned");
+      };
+    },
+  });
+  var menuPinBot = new nw.MenuItem({
+    label: "pin to bottom",
+    click: function () {
+      note.classList.add("floored");
+      note.classList.remove("pinned");
+      note.style.zIndex = (zincrement * 0).toString();
+      menuPinBot.label = "unpin from bot";
+      menuPinBot.click = function () {
+        note.classList.remove("floored");
+      };
+    },
+  });
+  var menuSubmenuColors = new nw.Menu();
+  var menuSubmenuColorsHolder = nw.MenuItem({
+    label: "set color:",
+    submenu: menuSubmenuColors,
+  });
+  var submenuColor1 = new nw.MenuItem({
+    label: "pale",
+    click: function () {
+      note.style.backgroundColor = "antiquewhite";
+    },
+  });
+  var submenuColor2 = new nw.MenuItem({
+    label: "blue",
+    click: function () {
+      note.style.backgroundColor = "#3998b4";
+    },
+  });
+  var submenuColor3 = new nw.MenuItem({
+    label: "red",
+    click: function () {
+      note.style.backgroundColor = "#bc536d";
+    },
+  });
+  var submenuColor4 = new nw.MenuItem({
+    label: "green",
+    click: function () {
+      note.style.backgroundColor = "#2da37a";
+    },
+  });
+  menuSubmenuColors.append(submenuColor1);
+  menuSubmenuColors.append(submenuColor2);
+  menuSubmenuColors.append(submenuColor3);
+  menuSubmenuColors.append(submenuColor4);
+  // var menuCloneNote = new nw.MenuItem({ // this doesn't work out right bc it breaks movement
+  //   label: "clone note",
+  //   click: function () {
+  //     document.body.appendChild(note.cloneNode(true));
+  //   },
+  // });
+  var menuDeleteNote = new nw.MenuItem({
+    label: "delete note",
+    click: function () {
+      if (confirm("delete? real?")) {
+        document.body.removeChild(note);
+      }
+    },
+  });
+  menu.append(menuPinTop);
+  menu.append(menuPinBot);
+  menu.append(menuSubmenuColorsHolder);
+  // menu.append(menuCloneNote);
+  menu.append(menuDeleteNote);
+  note.addEventListener("contextmenu", function (ev) {
+    ev.preventDefault();
+    menu.popup(ev.x, ev.y);
+  });
+
+  var noteText = document.createElement("p");
+  noteText.classList.add("text");
+  noteText.contentEditable = true;
+  // no linebreak for this one, consider cloning css or doing .cassette .text for positioning
+  // voices placeholder
   //resize grabbable
   noteHandle = document.createElement("div");
   noteHandle.classList.add("noteHandle");
