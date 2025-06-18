@@ -13,9 +13,9 @@ radialMenu.appendChild(testbutton);
 var makeNote = document.createElement("button");
 makeNote.textContent = "text";
 var makeAudio = document.createElement("button");
-makeAudio.textContent = "audio";
+makeAudio.textContent = "A/V";
 var makeVisual = document.createElement("button");
-makeVisual.textContent = "visual";
+makeVisual.textContent = "silent imgs";
 var makeDraw = document.createElement("button");
 makeDraw.textContent = "pen";
 var makePin = document.createElement("button");
@@ -129,8 +129,14 @@ function setResizeable(elem) {
     // set the element's parent div to the right dimensions:
     // this part SUCKS i DONT understand why we can't just pull the parent height but APPARENTLY THAT DOESNT EXIST??
     elem.parentElement.style.height =
-      (elem.parentElement.getBoundingClientRect()["height"] - pos2).toString() +
-      "px";
+      (
+        elem.parentElement.getBoundingClientRect()["height"] -
+        (elem.parentElement.classList.contains("note") ? 20 : 0) -
+        // fix this later, the notes are being handled differently
+        // discs are broken rn as well
+        // elem.parentElement.style.paddingBottom - // does not read this fsr
+        pos2
+      ).toString() + "px";
     elem.parentElement.style.width =
       (elem.parentElement.getBoundingClientRect()["width"] - pos1).toString() +
       "px";
@@ -404,13 +410,14 @@ makeAudio.addEventListener("click", async function (ev) {
     return;
   } else {
     if (fileData.type.startsWith("audio")) {
-      //this doesn't work fsr
-      console.log(fileData);
+      // //this doesn't work fsr
+      // console.log(fileData);
       // var sound = reader.readAsDataURL(file); //i THINK this works?
       var audioBlock = document.createElement("audio");
       audioBlock.controls = true;
       var source = document.createElement("source");
       source.src = URL.createObjectURL(fileData); //from how i understand this we need to load the dataurl and pass it as the audio source for the element but idk if that is this.
+      source.type = fileData.type;
       // make div inside conditional bc classlist
       var note = document.createElement("div");
       note.classList.add("cassette");
@@ -418,6 +425,20 @@ makeAudio.addEventListener("click", async function (ev) {
       audioBlock.appendChild(source);
       note.appendChild(audioBlock);
       // console.log("success " + fileData.toString());
+    } else if (fileData.type.startsWith("video")) {
+      var source = document.createElement("source");
+      // fileBlob = new Blob([fileData], { type: "video\/mp4" }); //doesn't change anything
+      source.src = URL.createObjectURL(fileData);
+      source.type = fileData.type;
+      var note = document.createElement("div");
+      note.classList.add("disc");
+
+      var videoBlock = document.createElement("video");
+      videoBlock.controls = true;
+
+      videoBlock.appendChild(source);
+      videoBlock.autoplay = false;
+      note.appendChild(videoBlock);
     }
   }
   // pin top, pin bottom, delete, change color, etc. need to edit the color settings
@@ -503,10 +524,17 @@ makeAudio.addEventListener("click", async function (ev) {
     menu.popup(ev.x, ev.y);
   });
 
-  var noteText = document.createElement("p");
-  noteText.classList.add("text");
-  noteText.contentEditable = true;
-  // no linebreak for this one, consider cloning css or doing .cassette .text for positioning
+  var noteLabel = document.createElement("input");
+  noteLabel.type = "text";
+  noteLabel.classList.add("label"); //classing it label might be confusing but whatev
+  // noteLabel.contentEditable = true; // already editable as input
+  // drop focus on any enter plress
+  noteLabel.addEventListener("keydown", function (ev) {
+    if (ev.key == "Enter") {
+      ev.preventDefault();
+      noteLabel.blur();
+    }
+  });
   // voices placeholder
   //resize grabbable
   noteHandle = document.createElement("div");
@@ -514,12 +542,12 @@ makeAudio.addEventListener("click", async function (ev) {
   setResizeable(noteHandle);
   //place on board
   note.appendChild(noteHandle);
-  note.appendChild(noteText);
+  note.appendChild(noteLabel);
   document.body.appendChild(note);
-  noteText.focus();
+  noteLabel.focus();
   note.style.top = (ev.clientY + 85).toString() + "px";
   note.style.left = (ev.clientX - 20).toString() + "px";
-  //attach drag script? or can we handle that glob
+  //attach drag script
   setDraggable(note);
 });
 
