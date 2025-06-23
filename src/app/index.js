@@ -94,7 +94,7 @@ function setDraggable(elem) {
   function stopDragging() {
     document.onmouseup = null;
     document.onmousemove = null;
-    zincrement++;
+    zincrement++; //this applies on every mouseup
   }
 }
 
@@ -128,18 +128,41 @@ function setResizeable(elem) {
     pos4 = ev.clientY;
     // set the element's parent div to the right dimensions:
     // this part SUCKS i DONT understand why we can't just pull the parent height but APPARENTLY THAT DOESNT EXIST??
-    elem.parentElement.style.height =
-      (
-        elem.parentElement.getBoundingClientRect()["height"] -
-        (elem.parentElement.classList.contains("note") ? 20 : 0) -
-        // fix this later, the notes are being handled differently
-        // discs are broken rn as well
-        // elem.parentElement.style.paddingBottom - // does not read this fsr
-        pos2
-      ).toString() + "px";
-    elem.parentElement.style.width =
-      (elem.parentElement.getBoundingClientRect()["width"] - pos1).toString() +
-      "px";
+
+    if (elem.parentElement.classList.contains("polaroid")) {
+      elem.parentElement.style.height =
+        (
+          elem.parentElement.getBoundingClientRect()["height"] -
+          // fix this later, the notes are being handled differently
+          // discs are broken rn as well
+          // elem.parentElement.style.paddingBottom - // does not read this fsr
+          pos2
+        ).toString() + "px";
+      elem.parentElement.style.width =
+        (
+          elem.previousSibling.getBoundingClientRect()["width"] + 20
+        ).toString() + "px";
+      //compensate with width
+      elem.previousSibling.style.height =
+        (elem.parentElement.getBoundingClientRect()["height"] - 40).toString() +
+        "px";
+      //add in the resize for the input field here, ?
+      elem.nextSibling.style.width = (elem.previousSibling.getBoundingClientRect()["width"] + 20).toString + "px"
+    } else {
+      elem.parentElement.style.height =
+        (
+          elem.parentElement.getBoundingClientRect()["height"] -
+          (elem.parentElement.classList.contains("note") ? 20 : 0) -
+          // fix this later, the notes are being handled differently
+          // discs are broken rn as well
+          // elem.parentElement.style.paddingBottom - // does not read this fsr
+          pos2
+        ).toString() + "px";
+      elem.parentElement.style.width =
+        (
+          elem.parentElement.getBoundingClientRect()["width"] - pos1
+        ).toString() + "px";
+    }
   }
 
   function stopDragging() {
@@ -404,8 +427,8 @@ makeAudio.addEventListener("click", async function (ev) {
     excludeAcceptAllOption: true,
     multiple: false,
   };
-  var [fileHandle] = await window.showOpenFilePicker(pickerOpts);
-  var fileData = await fileHandle.getFile();
+  const [fileHandle] = await window.showOpenFilePicker(pickerOpts);
+  const fileData = await fileHandle.getFile();
   if (!fileData) {
     return;
   } else {
@@ -427,8 +450,13 @@ makeAudio.addEventListener("click", async function (ev) {
       // console.log("success " + fileData.toString());
     } else if (fileData.type.startsWith("video")) {
       var source = document.createElement("source");
-      // fileBlob = new Blob([fileData], { type: "video\/mp4" }); //doesn't change anything
-      source.src = URL.createObjectURL(fileData);
+      var fileBlob = new Blob([fileData], { type: "video\/mp4" }); //doesn't change anything
+      // var buf = await fileBlob.arrayBuffer();
+      source.src = URL.createObjectURL(new Blob([fileData], {type: fileData.type}));
+      // source.src = fileData;
+      // source.src = URL.createObjectURL(fileData);
+      // source.src = new MediaStream();
+      console.log(fileHandle);
       source.type = fileData.type;
       var note = document.createElement("div");
       note.classList.add("disc");
@@ -440,115 +468,275 @@ makeAudio.addEventListener("click", async function (ev) {
       videoBlock.autoplay = false;
       note.appendChild(videoBlock);
     }
-  }
-  // pin top, pin bottom, delete, change color, etc. need to edit the color settings
-  var menu = new nw.Menu();
-  var menuPinTop = new nw.MenuItem({
-    label: "pin to top",
-    click: function () {
-      note.classList.add("pinned");
-      note.classList.remove("floored");
-      note.style.zIndex = (zincrement + 2).toString();
-      menuPinTop.label = "unpin from top";
-      menuPinTop.click = function () {
-        note.classList.remove("pinned");
-      };
-    },
-  });
-  var menuPinBot = new nw.MenuItem({
-    label: "pin to bottom",
-    click: function () {
-      note.classList.add("floored");
-      note.classList.remove("pinned");
-      note.style.zIndex = (zincrement * 0).toString();
-      menuPinBot.label = "unpin from bot";
-      menuPinBot.click = function () {
+    // pin top, pin bottom, delete, change color, etc. need to edit the color settings
+    var menu = new nw.Menu();
+    var menuPinTop = new nw.MenuItem({
+      label: "pin to top",
+      click: function () {
+        note.classList.add("pinned");
         note.classList.remove("floored");
-      };
-    },
-  });
-  var menuSubmenuColors = new nw.Menu();
-  var menuSubmenuColorsHolder = nw.MenuItem({
-    label: "set color:",
-    submenu: menuSubmenuColors,
-  });
-  var submenuColor1 = new nw.MenuItem({
-    label: "pale",
-    click: function () {
-      note.style.backgroundColor = "antiquewhite";
-    },
-  });
-  var submenuColor2 = new nw.MenuItem({
-    label: "blue",
-    click: function () {
-      note.style.backgroundColor = "#3998b4";
-    },
-  });
-  var submenuColor3 = new nw.MenuItem({
-    label: "red",
-    click: function () {
-      note.style.backgroundColor = "#bc536d";
-    },
-  });
-  var submenuColor4 = new nw.MenuItem({
-    label: "green",
-    click: function () {
-      note.style.backgroundColor = "#2da37a";
-    },
-  });
-  menuSubmenuColors.append(submenuColor1);
-  menuSubmenuColors.append(submenuColor2);
-  menuSubmenuColors.append(submenuColor3);
-  menuSubmenuColors.append(submenuColor4);
-  // var menuCloneNote = new nw.MenuItem({ // this doesn't work out right bc it breaks movement
-  //   label: "clone note",
-  //   click: function () {
-  //     document.body.appendChild(note.cloneNode(true));
-  //   },
-  // });
-  var menuDeleteNote = new nw.MenuItem({
-    label: "delete note",
-    click: function () {
-      if (confirm("delete? real?")) {
-        document.body.removeChild(note);
-      }
-    },
-  });
-  menu.append(menuPinTop);
-  menu.append(menuPinBot);
-  menu.append(menuSubmenuColorsHolder);
-  // menu.append(menuCloneNote);
-  menu.append(menuDeleteNote);
-  note.addEventListener("contextmenu", function (ev) {
-    ev.preventDefault();
-    menu.popup(ev.x, ev.y);
-  });
-
-  var noteLabel = document.createElement("input");
-  noteLabel.type = "text";
-  noteLabel.classList.add("label"); //classing it label might be confusing but whatev
-  // noteLabel.contentEditable = true; // already editable as input
-  // drop focus on any enter plress
-  noteLabel.addEventListener("keydown", function (ev) {
-    if (ev.key == "Enter") {
+        note.style.zIndex = (zincrement + 2).toString();
+        menuPinTop.label = "unpin from top";
+        menuPinTop.click = function () {
+          note.classList.remove("pinned");
+        };
+      },
+    });
+    var menuPinBot = new nw.MenuItem({
+      label: "pin to bottom",
+      click: function () {
+        note.classList.add("floored");
+        note.classList.remove("pinned");
+        note.style.zIndex = (zincrement * 0).toString();
+        menuPinBot.label = "unpin from bot";
+        menuPinBot.click = function () {
+          note.classList.remove("floored");
+        };
+      },
+    });
+    var menuSubmenuColors = new nw.Menu();
+    var menuSubmenuColorsHolder = nw.MenuItem({
+      label: "set color:",
+      submenu: menuSubmenuColors,
+    });
+    var submenuColor1 = new nw.MenuItem({
+      label: "pale",
+      click: function () {
+        note.style.backgroundColor = "antiquewhite";
+      },
+    });
+    var submenuColor2 = new nw.MenuItem({
+      label: "blue",
+      click: function () {
+        note.style.backgroundColor = "#3998b4";
+      },
+    });
+    var submenuColor3 = new nw.MenuItem({
+      label: "red",
+      click: function () {
+        note.style.backgroundColor = "#bc536d";
+      },
+    });
+    var submenuColor4 = new nw.MenuItem({
+      label: "green",
+      click: function () {
+        note.style.backgroundColor = "#2da37a";
+      },
+    });
+    menuSubmenuColors.append(submenuColor1);
+    menuSubmenuColors.append(submenuColor2);
+    menuSubmenuColors.append(submenuColor3);
+    menuSubmenuColors.append(submenuColor4);
+    // var menuCloneNote = new nw.MenuItem({ // this doesn't work out right bc it breaks movement
+    //   label: "clone note",
+    //   click: function () {
+    //     document.body.appendChild(note.cloneNode(true));
+    //   },
+    // });
+    var menuDeleteNote = new nw.MenuItem({
+      label: "delete note",
+      click: function () {
+        if (confirm("delete? real?")) {
+          document.body.removeChild(note);
+        }
+      },
+    });
+    menu.append(menuPinTop);
+    menu.append(menuPinBot);
+    menu.append(menuSubmenuColorsHolder);
+    // menu.append(menuCloneNote);
+    menu.append(menuDeleteNote);
+    note.addEventListener("contextmenu", function (ev) {
       ev.preventDefault();
-      noteLabel.blur();
+      menu.popup(ev.x, ev.y);
+    });
+
+    var noteLabel = document.createElement("input");
+    noteLabel.type = "text";
+    noteLabel.classList.add("label"); //classing it label might be confusing but whatev
+    // noteLabel.contentEditable = true; // already editable as input
+    // drop focus on any enter plress
+    noteLabel.addEventListener("keydown", function (ev) {
+      if (ev.key == "Enter") {
+        ev.preventDefault();
+        noteLabel.blur();
+      }
+    });
+    // voices placeholder
+    //resize grabbable
+    noteHandle = document.createElement("div");
+    noteHandle.classList.add("noteHandle");
+    setResizeable(noteHandle);
+    //place on board
+    note.appendChild(noteHandle);
+    note.appendChild(noteLabel);
+    document.body.appendChild(note);
+    noteLabel.focus();
+    note.style.top = (ev.clientY + 85).toString() + "px";
+    note.style.left = (ev.clientX - 20).toString() + "px";
+    //attach drag script
+    setDraggable(note);
+
+    //extra testing
+    // var uploadInputTest = document.createElement("input");
+    // uploadInputTest.type = "file";
+    // note.appendChild(uploadInputTest);
+  }
+});
+
+makeVisual.addEventListener("click", async function (ev) {
+  var pickerOpts = {
+    types: [
+      {
+        description: "Image formats",
+        accept: {
+          "image/*": [".png", ".jpg", ".jpeg", ".gif", ".apng", ".webp"],
+        },
+      },
+    ],
+    excludeAcceptAllOption: true,
+    multiple: false,
+  };
+  const [fileHandle] = await window.showOpenFilePicker(pickerOpts);
+  const fileData = await fileHandle.getFile();
+  if (!fileData) {
+    return;
+  } else {
+    // //this doesn't work fsr
+    // console.log(fileData);
+    // var sound = reader.readAsDataURL(file); //i THINK this works?
+    var imageBlock = document.createElement("img");
+    imageBlock.src = URL.createObjectURL(fileData); //from how i understand this we need to load the dataurl and pass it as the audio source for the element but idk if that is this.
+    imageBlock.type = fileData.type;
+    imageBlock.style.height = "180px";
+    imageBlock.draggable = false;
+    // make div inside conditional bc classlist
+    var note = document.createElement("div");
+    note.classList.add("polaroid");
+
+    // imageBlock.appendChild(source);
+    note.appendChild(imageBlock);
+    // pin top, pin bottom, delete, change color, etc. need to edit the color settings
+    var menu = new nw.Menu();
+    var menuPinTop = new nw.MenuItem({
+      label: "pin to top",
+      click: function () {
+        note.classList.add("pinned");
+        note.classList.remove("floored");
+        note.style.zIndex = (zincrement + 2).toString();
+        menuPinTop.label = "unpin from top";
+        menuPinTop.click = function () {
+          note.classList.remove("pinned");
+        };
+      },
+    });
+    var menuPinBot = new nw.MenuItem({
+      label: "pin to bottom",
+      click: function () {
+        note.classList.add("floored");
+        note.classList.remove("pinned");
+        note.style.zIndex = (zincrement * 0).toString();
+        menuPinBot.label = "unpin from bot";
+        menuPinBot.click = function () {
+          note.classList.remove("floored");
+        };
+      },
+    });
+    var menuSubmenuColors = new nw.Menu();
+    var menuSubmenuColorsHolder = nw.MenuItem({
+      label: "set color:",
+      submenu: menuSubmenuColors,
+    });
+    var submenuColor1 = new nw.MenuItem({
+      label: "pale",
+      click: function () {
+        note.style.backgroundColor = "antiquewhite";
+      },
+    });
+    var submenuColor2 = new nw.MenuItem({
+      label: "blue",
+      click: function () {
+        note.style.backgroundColor = "#3998b4";
+      },
+    });
+    var submenuColor3 = new nw.MenuItem({
+      label: "red",
+      click: function () {
+        note.style.backgroundColor = "#bc536d";
+      },
+    });
+    var submenuColor4 = new nw.MenuItem({
+      label: "green",
+      click: function () {
+        note.style.backgroundColor = "#2da37a";
+      },
+    });
+    menuSubmenuColors.append(submenuColor1);
+    menuSubmenuColors.append(submenuColor2);
+    menuSubmenuColors.append(submenuColor3);
+    menuSubmenuColors.append(submenuColor4);
+    // var menuCloneNote = new nw.MenuItem({ // this doesn't work out right bc it breaks movement
+    //   label: "clone note",
+    //   click: function () {
+    //     document.body.appendChild(note.cloneNode(true));
+    //   },
+    // });
+    var menuDeleteNote = new nw.MenuItem({
+      label: "delete note",
+      click: function () {
+        if (confirm("delete? real?")) {
+          document.body.removeChild(note);
+        }
+      },
+    });
+    menu.append(menuPinTop);
+    menu.append(menuPinBot);
+    menu.append(menuSubmenuColorsHolder);
+    // menu.append(menuCloneNote);
+    menu.append(menuDeleteNote);
+    note.addEventListener("contextmenu", function (ev) {
+      ev.preventDefault();
+      menu.popup(ev.x, ev.y);
+    });
+
+    var noteLabel = document.createElement("input");
+    noteLabel.type = "text";
+    noteLabel.classList.add("label"); //classing it label might be confusing but whatev
+    // noteLabel.contentEditable = true; // already editable as input
+    // drop focus on any enter plress
+    noteLabel.addEventListener("keydown", function (ev) {
+      if (ev.key == "Enter") {
+        ev.preventDefault();
+        noteLabel.blur();
+      }
+    });
+    // voices placeholder
+    //resize grabbable
+    noteHandle = document.createElement("div");
+    noteHandle.classList.add("noteHandle");
+    setResizeable(noteHandle);
+    //place on board
+    note.appendChild(noteHandle);
+    note.appendChild(noteLabel);
+    document.body.appendChild(note);
+    noteLabel.focus();
+    note.style.top = (ev.clientY + 85).toString() + "px";
+    note.style.left = (ev.clientX - 20).toString() + "px";
+    //attach drag script
+    setDraggable(note);
+
+    imageBlock.onload() = function () {
+    note.style.width =
+      (imageBlock.getBoundingClientRect()["width"] + 20).toString() + "px";
     }
-  });
-  // voices placeholder
-  //resize grabbable
-  noteHandle = document.createElement("div");
-  noteHandle.classList.add("noteHandle");
-  setResizeable(noteHandle);
-  //place on board
-  note.appendChild(noteHandle);
-  note.appendChild(noteLabel);
-  document.body.appendChild(note);
-  noteLabel.focus();
-  note.style.top = (ev.clientY + 85).toString() + "px";
-  note.style.left = (ev.clientX - 20).toString() + "px";
-  //attach drag script
-  setDraggable(note);
+    console.log((imageBlock.naturalWidth + 20).toString());
+    console.log(fileData);
+
+    //extra testing
+    // var uploadInputTest = document.createElement("input");
+    // uploadInputTest.type = "file";
+    // note.appendChild(uploadInputTest);
+  }
 });
 
 document.body.appendChild(radialMenu);
