@@ -1,5 +1,3 @@
-// Window.showDevTools();
-
 //constructing the radial menu for base interactions
 var radialMenu = document.createElement("div");
 radialMenu.classList.add("radialMenu");
@@ -97,6 +95,7 @@ function setDraggable(elem) {
     zincrement++; //this applies on every mouseup
   }
 }
+// setDraggable(document.body); // has issues with the create wheel eating the input
 
 //function for resizing notes
 function setResizeable(elem) {
@@ -144,10 +143,12 @@ function setResizeable(elem) {
         ).toString() + "px";
       //compensate with width
       elem.previousSibling.style.height =
-        (elem.parentElement.getBoundingClientRect()["height"] - 40).toString() +
+        (elem.parentElement.getBoundingClientRect()["height"] - 50).toString() +
         "px";
       //add in the resize for the input field here, ?
-      elem.nextSibling.style.width = (elem.previousSibling.getBoundingClientRect()["width"] + 20).toString + "px"
+      elem.nextSibling.style.width =
+        (elem.previousSibling.getBoundingClientRect()["width"] + 20).toString +
+        "px";
     } else {
       elem.parentElement.style.height =
         (
@@ -199,8 +200,10 @@ function lineBreak(ev, note) {
       newP.addEventListener("keydown", function (ev) {
         lineBreak(ev, note);
       });
-      note.appendChild(newP);
-      newP.focus();
+      // note.appendChild(newP);
+      note.insertBefore(newP, ev.target.nextSibling);
+      newP.focus(); //{ preventScroll: true }
+      // ev.stopPropogation();
     }
   } else if (ev.key == "ArrowUp" && ev.target.previousSibling != null) {
     // code for moving up a line
@@ -452,7 +455,9 @@ makeAudio.addEventListener("click", async function (ev) {
       var source = document.createElement("source");
       var fileBlob = new Blob([fileData], { type: "video\/mp4" }); //doesn't change anything
       // var buf = await fileBlob.arrayBuffer();
-      source.src = URL.createObjectURL(new Blob([fileData], {type: fileData.type}));
+      source.src = URL.createObjectURL(
+        new Blob([fileData], { type: fileData.type }),
+      );
       // source.src = fileData;
       // source.src = URL.createObjectURL(fileData);
       // source.src = new MediaStream();
@@ -725,10 +730,10 @@ makeVisual.addEventListener("click", async function (ev) {
     //attach drag script
     setDraggable(note);
 
-    imageBlock.onload() = function () {
-    note.style.width =
-      (imageBlock.getBoundingClientRect()["width"] + 20).toString() + "px";
-    }
+    // imageBlock.onload() = function () {
+    // note.style.width =
+    //   (imageBlock.getBoundingClientRect()["width"] + 20).toString() + "px";
+    // }
     console.log((imageBlock.naturalWidth + 20).toString());
     console.log(fileData);
 
