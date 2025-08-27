@@ -1,3 +1,8 @@
+//wrapper div for placing elements in
+const domain = document.createElement("div");
+domain.classList.add("domain");
+document.body.appendChild(domain);
+
 //constructing the radial menu for base interactions
 var radialMenu = document.createElement("div");
 radialMenu.classList.add("radialMenu");
@@ -33,7 +38,7 @@ buttons.forEach(function (button) {
     testbutton.checked = false;
     // document.removeChild(radialMenu); //doesn't work
     // keeping this option here in case we want to fly away the vanish based on where it was clicked
-    document.removeChild(radialMenu);
+    document.removeChild(radialMenu); // this seems to not have been needed ??
     buttons.forEach(function (button) {
       button.setAttribute("disabled", "disabled");
       // enable this again or set timeout on button
@@ -55,16 +60,16 @@ function setDraggable(elem) {
     pos3 = 0,
     pos4 = 0;
 
-  elem.onmousedown = dragMouseDown;
+  elem.onpointerdown = dragMouseDown;
 
   function dragMouseDown(ev) {
     if (elem == ev.target && ev.buttons == 1) {
       ev.preventDefault();
-      pos3 = ev.clientX;
-      pos4 = ev.clientY;
-      document.onmouseup = stopDragging;
+      pos3 = ev.clientX + window.scrollX;
+      pos4 = ev.clientY + window.scrollY;
+      document.onpointerup = stopDragging;
       // call a function whenever the cursor moves:
-      document.onmousemove = dragItem;
+      document.onpointermove = dragItem;
     }
   }
 
@@ -90,12 +95,78 @@ function setDraggable(elem) {
   }
 
   function stopDragging() {
-    document.onmouseup = null;
-    document.onmousemove = null;
-    zincrement++; //this applies on every mouseup
+    document.onpointerup = null;
+    document.onpointermove = null;
+    zincrement++; //this applies on every pointerup
   }
 }
-// setDraggable(document.body); // has issues with the create wheel eating the input
+
+//// function for dragging the page as a whole cred tanuki
+// Get refs to elements
+const canvasWindow = document.body;
+const canvasContents = document.getElementsByClassName("note");
+
+let initialX = 0;
+let initialY = 0;
+let deltaX = 0;
+let deltaY = 0;
+
+let isPointerDown = false;
+
+function handlePointerStart(event) {
+  // Prevent default behavior
+  // event.preventDefault();
+
+  // Set new initial offset
+  initialX = event.clientX - deltaX;
+  initialY = event.clientY - deltaY;
+
+  // console.log("initial start", initialX, initialY);
+  // console.log("event start", event.clientX, event.clientY);
+  // console.log("delta start", deltaX, deltaY);
+
+  isPointerDown = true;
+}
+
+function handlePointerMove(event) {
+  // Prevent default behavior
+  // event.preventDefault();
+
+  if (isPointerDown === false) {
+    return;
+  }
+  if (event.buttons == 1 && event.altKey) {
+    deltaX = event.clientX - initialX;
+    deltaY = event.clientY - initialY;
+
+    // console.log("initial", initialX, initialY);
+    // console.log("event", event.clientX, event.clientY);
+    // console.log("delta", deltaX, deltaY);
+
+    applyOffset(-deltaX, -deltaY);
+  }
+}
+
+function applyOffset(offsetX, offsetY) {
+  console.log(offsetX, offsetY);
+  window.scrollTo(offsetX, offsetY);
+  // canvasContents.style.left = `calc(50% - ${offsetX}px)`;
+  // canvasContents.style.top = `calc(50% - ${offsetY}px)`;
+}
+
+function handlePointerUp(event) {
+  // Prevent default behavior
+  event.preventDefault();
+
+  isPointerDown = false;
+}
+// Add pointer event listeners
+// these aren't attaching properly bc of the adaptment needed to the current setup
+// but i do need to attach these to the window itself?
+window.addEventListener("pointerdown", handlePointerStart);
+// this (^) is fine on its own, but currently eats the input to select text boxes?
+window.addEventListener("pointermove", handlePointerMove);
+window.addEventListener("pointerup", handlePointerUp);
 
 //function for resizing notes
 function setResizeable(elem) {
@@ -106,16 +177,16 @@ function setResizeable(elem) {
     pos3 = 0,
     pos4 = 0;
 
-  elem.onmousedown = dragMouseDown;
+  elem.onpointerdown = dragMouseDown;
 
   function dragMouseDown(ev) {
     if (elem == ev.target && ev.buttons == 1) {
       ev.preventDefault();
       pos3 = ev.clientX;
       pos4 = ev.clientY;
-      document.onmouseup = stopDragging;
+      document.onpointerup = stopDragging;
       // call a function whenever the cursor moves:
-      document.onmousemove = dragItem;
+      document.onpointermove = dragItem;
     }
   }
   function dragItem(ev) {
@@ -128,14 +199,20 @@ function setResizeable(elem) {
     // set the element's parent div to the right dimensions:
     // this part SUCKS i DONT understand why we can't just pull the parent height but APPARENTLY THAT DOESNT EXIST??
 
+    var totalheights = (function () {
+      var sum = 0;
+      for (let child of elem.parentElement.getElementsByClassName("text")) {
+        sum += child.getBoundingClientRect()["height"];
+      }
+      return sum;
+    })();
+    console.log(totalheights); // not adding up to the right number fsr
+
     if (elem.parentElement.classList.contains("polaroid")) {
+      // discs are broken rn as well
       elem.parentElement.style.height =
         (
-          elem.parentElement.getBoundingClientRect()["height"] -
-          // fix this later, the notes are being handled differently
-          // discs are broken rn as well
-          // elem.parentElement.style.paddingBottom - // does not read this fsr
-          pos2
+          elem.parentElement.getBoundingClientRect()["height"] - pos2
         ).toString() + "px";
       elem.parentElement.style.width =
         (
@@ -150,15 +227,19 @@ function setResizeable(elem) {
         (elem.previousSibling.getBoundingClientRect()["width"] + 20).toString +
         "px";
     } else {
-      elem.parentElement.style.height =
-        (
-          elem.parentElement.getBoundingClientRect()["height"] -
-          (elem.parentElement.classList.contains("note") ? 20 : 0) -
-          // fix this later, the notes are being handled differently
-          // discs are broken rn as well
-          // elem.parentElement.style.paddingBottom - // does not read this fsr
-          pos2
-        ).toString() + "px";
+      // set new minimum height
+      let modval =
+        elem.parentElement.getBoundingClientRect()["height"] -
+        (elem.parentElement.classList.contains("note") ? 20 : 0);
+      // console.log(modval - pos2 >= totalheights);
+      elem.parentElement.style.height = (modval - pos2).toString() + "px";
+      // when we get back to this, limit with the below.
+      // currently slipping under and can't resize out of it again
+      // (modval - pos2 >= totalheights
+      //   ? modval - pos2
+      //   : elem.parentElement.getBoundingClientRect()["height"] -
+      //     (elem.parentElement.classList.contains("note") ? 20 : 0)
+      // ).toString() + "px";
       elem.parentElement.style.width =
         (
           elem.parentElement.getBoundingClientRect()["width"] - pos1
@@ -167,12 +248,13 @@ function setResizeable(elem) {
   }
 
   function stopDragging() {
-    document.onmouseup = null;
-    document.onmousemove = null;
+    document.onpointerup = null;
+    document.onpointermove = null;
   }
 }
 
 // function for reordering paragraph elements that are set to draggable
+// probably canned
 function setReorderable(elem) {
   //stealing most of the stuff from the one above,
   // checking for relative position to siblings?
@@ -205,6 +287,9 @@ function lineBreak(ev, note) {
       newP.focus(); //{ preventScroll: true }
       // ev.stopPropogation();
     }
+    //handle resizing the note on a new line - bad val if font size ever changes
+    note.style.height =
+      (note.getBoundingClientRect()["height"] + 12).toString + "px";
   } else if (ev.key == "ArrowUp" && ev.target.previousSibling != null) {
     // code for moving up a line
     ev.target.previousSibling.focus();
@@ -747,7 +832,7 @@ makeVisual.addEventListener("click", async function (ev) {
 document.body.appendChild(radialMenu);
 
 //handles setting radial menu position. generally good
-document.body.addEventListener("mousedown", function (ev) {
+document.addEventListener("pointerdown", function (ev) {
   // can return later to set var for mod
   // currently this does not apply once we go over the edge of the bounding box. how to fix that if notes steal it down?
   if (ev.shiftKey && !testbutton.checked && ev.buttons == 1) {
@@ -758,11 +843,13 @@ document.body.addEventListener("mousedown", function (ev) {
         button.removeAttribute("disabled");
       }, 100);
       if (button == closeMake) {
-        button.style.top = (ev.clientY - 25).toString() + "px";
-        button.style.left = (ev.clientX - 25).toString() + "px";
+        button.style.top = (ev.clientY - 25 + window.scrollY).toString() + "px";
+        button.style.left =
+          (ev.clientX - 25 + window.scrollX).toString() + "px";
       } else {
-        button.style.top = (ev.clientY - 45).toString() + "px";
-        button.style.left = (ev.clientX - 45).toString() + "px";
+        button.style.top = (ev.clientY - 45 + window.scrollY).toString() + "px";
+        button.style.left =
+          (ev.clientX - 45 + window.scrollX).toString() + "px";
       }
     });
     setTimeout(function () {
